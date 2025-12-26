@@ -191,7 +191,7 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glm::vec3 lightPos(-0.2f, -1.0f, -0.3f);
+	glm::vec3 lightPos(0.5f, 0.75f, 0.5f);
 
 	// ---------------------------------------------------------------------------------------------- TEXTURES
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -248,6 +248,9 @@ int main() {
 
 		glm::mat4 model = glm::mat4(1.0f);
 		float radius = 1.5;
+		lightPos.x = sin(currentTime) * radius;
+		lightPos.y = sin(currentTime * radius * 2);
+		lightPos.z = cos(currentTime) * radius;
 
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
@@ -274,8 +277,11 @@ int main() {
 		shader.setFloat("light.ambient",  0.3f, 0.3f, 0.3f);
 		shader.setFloat("light.diffuse",  0.75, 0.75, 0.75);
 		shader.setFloat("light.specular", 1.0f, 1.0f, 1.0f);
-		//shader.setFloat("light.position", lightPos.x, lightPos.y, lightPos.z);
-		shader.setFloat("light.direction", lightPos.x, lightPos.y, lightPos.z);
+		shader.setFloat("light.position", lightPos.x, lightPos.y, lightPos.z);
+		shader.setFloat("light.constant",	1.0f);
+		shader.setFloat("light.linear",		0.09f);
+		shader.setFloat("light.quadratic",	0.032f);
+		//shader.setFloat("light.direction", lightPos.x, lightPos.y, lightPos.z);
 		
 		shader.setFloat("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
 		
@@ -287,15 +293,7 @@ int main() {
 			model = glm::rotate(model, glm::radians(angle * currentTime), glm::vec3(0.3f, 0.5f, 0.2f));
 			shader.setMat("model", glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
-
-		//model = glm::mat4(1.0f);
-		//shader.setMat("model", glm::value_ptr(model));
-
-		// Render Cube
-		
-		// ------------------------------------------| 
-		
+		}		
 		// ------------------------------------------------------------------------------------
 
 		glBindVertexArray(0);
