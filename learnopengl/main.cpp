@@ -11,7 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "keysettings.h"
 #include "camera.h"
-
+#include <sstream>
+#include <string>
 
 
 // ---------------------------------------------------------------------------------------------- Window
@@ -145,6 +146,14 @@ int main() {
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
+	// ---------------------------------------------------------------------------------------------- POINT LIGHT POSITIONS
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(0.7f,  0.2f,  2.0f),
+		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(-4.0f,  2.0f, -12.0f),
+		glm::vec3(0.0f,  0.0f, -3.0f)
+	};
+
 	// ---------------------------------------------------------------------------------------------- SHADERS
 	Shader shader("vertex.vert", "fragment.frag");
 	Shader lightShader("lamp.vert", "lamp.frag");
@@ -206,8 +215,8 @@ int main() {
 	projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 
 	shader.use();
-	shader.setMat("view", glm::value_ptr(view));
-	shader.setMat("projection", glm::value_ptr(projection));
+	shader.setMat("view", view);
+	shader.setMat("projection", projection);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -229,9 +238,26 @@ int main() {
 		view = camera.GetViewMatrix();
 
 		shader.use();
-		shader.setMat("view", glm::value_ptr(view));
-		shader.setMat("projection", glm::value_ptr(projection));
+		shader.setMat("view", view);
+		shader.setMat("projection", projection);
 		// ------------------------------------------------------------------------------------
+
+		// ------------------------------------------| Place Lights
+		lightShader.use();
+		lightShader.setMat("view", view);
+		lightShader.setMat("projection", projection);
+
+		unsigned int NR_POINT_LIGHTS = 4;
+		glBindVertexArray(lightVAO);
+		for (unsigned int i = 0; i < NR_POINT_LIGHTS; i++) {
+			glm::mat4 model = glm::mat4(1.0f);
+			
+			model = glm::translate(model, pointLightPositions[i]);
+			model = glm::scale(model, glm::vec3(0.2f));
+			
+			lightShader.setMat("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 
 		// ------------------------------------------| Place Cube & Setup Shader
 		shader.use();
@@ -241,22 +267,46 @@ int main() {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
 
+		// ------------------------------------------| Material
 		shader.setFloat("material.shininess", 32.0f);
 
-		shader.setFloat("light.ambient",  0.1f, 0.1f, 0.1f);
-		shader.setFloat("light.diffuse",  0.8f, 0.8f, 0.8f);
-		shader.setFloat("light.specular", 1.0f, 1.0f, 1.0f);
-		
-		shader.setFloat("light.position",  camera.Position);
-		shader.setFloat("light.direction", camera.Front);
+		// ------------------------------------------| Directional Light
+		shader.setFloat("dirLight.direction",	glm::vec3(-0.2f, -1.0f, -0.3f));
+		shader.setFloat("dirLight.ambient",		glm::vec3(0.1f));
+		shader.setFloat("dirLight.diffuse",		glm::vec3(0.8f));
+		shader.setFloat("dirLight.specular",	glm::vec3(1.0f));
 
-		shader.setFloat("light.constant",	1.0f);
-		shader.setFloat("light.linear",		0.09f);
-		shader.setFloat("light.quadratic",	0.032f);
+		// ------------------------------------------| Spot Lights
+		shader.setFloat("spotLights[0].position",		camera.Position);
+		shader.setFloat("spotLights[0].direction",		camera.Front);
 
-		shader.setFloat("light.innerCutoff", glm::cos(glm::radians(12.5f)));
-		shader.setFloat("light.outerCutoff", glm::cos(glm::radians(17.5f)));
-		
+		shader.setFloat("spotLights[0].innerCutoff",	glm::cos(glm::radians(12.5f)));
+		shader.setFloat("spotLights[0].outerCutoff",	glm::cos(glm::radians(17.5f)));
+
+		shader.setFloat("spotLights[0].ambient",		glm::vec3(0.1f));
+		shader.setFloat("spotLights[0].diffuse",		glm::vec3(0.8f));
+		shader.setFloat("spotLights[0].specular",		glm::vec3(1.0f));
+
+		shader.setFloat("spotLights[0].constant",		1.0f);
+		shader.setFloat("spotLights[0].linear",			0.09f);
+		shader.setFloat("spotLights[0].quadratic",		0.032f);
+
+		// ------------------------------------------| Point Lights
+		for (unsigned int i = 0; i < NR_POINT_LIGHTS; i++) {
+			std::string uniform = "pointLights[" + std::to_string(i) + "].";
+
+			shader.setFloat(uniform + "position",	camera.Position);
+
+			shader.setFloat(uniform + "ambient",	glm::vec3(0.1f));
+			shader.setFloat(uniform + "diffuse",	glm::vec3(0.3f));
+			shader.setFloat(uniform + "specular",	glm::vec3(1.0f));
+
+			shader.setFloat(uniform + "constant",	1.0f);
+			shader.setFloat(uniform + "linear",		0.09f);
+			shader.setFloat(uniform + "quadratic",	0.032f);
+		}
+
+		// ------------------------------------------| View Pos
 		shader.setFloat("viewPos", camera.Position);
 		
 		// ------------------------------------------| Render Cubes
@@ -266,7 +316,7 @@ int main() {
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 15.0f * i;
 			model = glm::rotate(model, glm::radians(angle * currentTime), glm::vec3(0.3f, 0.5f, 0.2f));
-			shader.setMat("model", glm::value_ptr(model));
+			shader.setMat("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}		
 		// ------------------------------------------------------------------------------------
