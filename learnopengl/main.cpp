@@ -84,14 +84,6 @@ int main() {
 
 	mouseLastX = static_cast<float>(SCREEN_WIDTH) / 2;
 	mouseLastY = static_cast<float>(SCREEN_HEIGHT) / 2;
-
-	//float vertices[] = {
-	//	// positions          // texture coords
-	//	 0.5f,  0.5f, 0.0f,   1.0f, 1.0f,		// top right
-	//	 0.5f, -0.5f, 0.0f,   1.0f, 0.0f,		// bottom right
-	//	-0.5f, -0.5f, 0.0f,   0.0f, 0.0f,		// bottom left
-	//	-0.5f,  0.5f, 0.0f,   0.0f, 1.0f		// top left 
-	//};
 	
 	// ------------------------------------------| CUBE VERTICES
 	float vertices[] = {
@@ -239,28 +231,6 @@ int main() {
 		shader.use();
 		shader.setMat("view", glm::value_ptr(view));
 		shader.setMat("projection", glm::value_ptr(projection));
-		// ------------------------------------------| 
-
-		// ------------------------------------------| Place Light & Setup Shader
-		lightShader.use();
-		lightShader.setMat("view", glm::value_ptr(view));
-		lightShader.setMat("projection", glm::value_ptr(projection));
-
-		glm::mat4 model = glm::mat4(1.0f);
-		float radius = 1.5;
-		lightPos.x = sin(currentTime) * radius;
-		lightPos.y = sin(currentTime * radius * 2);
-		lightPos.z = cos(currentTime) * radius;
-
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lightShader.setMat("model", glm::value_ptr(model));
-
-		// Render Light
-		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		// ------------------------------------------| 
-
 		// ------------------------------------------------------------------------------------
 
 		// ------------------------------------------| Place Cube & Setup Shader
@@ -271,20 +241,25 @@ int main() {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
 
-		shader.setFloat("material.specular",  0.5f, 0.5f, 0.5f);
 		shader.setFloat("material.shininess", 32.0f);
 
-		shader.setFloat("light.ambient",  0.3f, 0.3f, 0.3f);
-		shader.setFloat("light.diffuse",  0.75, 0.75, 0.75);
+		shader.setFloat("light.ambient",  0.1f, 0.1f, 0.1f);
+		shader.setFloat("light.diffuse",  0.8f, 0.8f, 0.8f);
 		shader.setFloat("light.specular", 1.0f, 1.0f, 1.0f);
-		shader.setFloat("light.position", lightPos.x, lightPos.y, lightPos.z);
+		
+		shader.setFloat("light.position",  camera.Position);
+		shader.setFloat("light.direction", camera.Front);
+
 		shader.setFloat("light.constant",	1.0f);
 		shader.setFloat("light.linear",		0.09f);
 		shader.setFloat("light.quadratic",	0.032f);
-		//shader.setFloat("light.direction", lightPos.x, lightPos.y, lightPos.z);
+
+		shader.setFloat("light.innerCutoff", glm::cos(glm::radians(12.5f)));
+		shader.setFloat("light.outerCutoff", glm::cos(glm::radians(17.5f)));
 		
-		shader.setFloat("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
+		shader.setFloat("viewPos", camera.Position);
 		
+		// ------------------------------------------| Render Cubes
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 10; i++) {
 			glm::mat4 model = glm::mat4(1.0f);
