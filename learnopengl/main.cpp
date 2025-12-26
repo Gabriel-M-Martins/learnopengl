@@ -93,8 +93,7 @@ int main() {
 	//	-0.5f,  0.5f, 0.0f,   0.0f, 1.0f		// top left 
 	//};
 	
-	// ---------------------------------------------------------------------------------------------- Data Buffers
-	// ------------------------------------------| Cube
+	// ------------------------------------------| CUBE VERTICES
 	float vertices[] = {
 		// positions          // normals           // texture coords
 		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
@@ -140,9 +139,25 @@ int main() {
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 	};
 
+	// ---------------------------------------------------------------------------------------------- CUBE POSITIONS
+	glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(2.0f,  5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f,  3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f,  2.0f, -2.5f),
+	glm::vec3(1.5f,  0.2f, -1.5f),
+	glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
+
+	// ---------------------------------------------------------------------------------------------- SHADERS
 	Shader shader("vertex.vert", "fragment.frag");
 	Shader lightShader("lamp.vert", "lamp.frag");
 
+	// ---------------------------------------------------------------------------------------------- DATA BUFFERS
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -166,7 +181,7 @@ int main() {
 
 	glBindVertexArray(0);
 
-	// ------------------------------------------| Light Source
+	// ------------------------------------------| LIGHT SOURCE
 	unsigned int lightVAO;
 	glGenVertexArrays(1, &lightVAO);
 	glBindVertexArray(lightVAO);
@@ -176,7 +191,7 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glm::vec3 lightPos(0.75f, 0.75f, 2.0f);
+	glm::vec3 lightPos(-0.2f, -1.0f, -0.3f);
 
 	// ---------------------------------------------------------------------------------------------- TEXTURES
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -233,9 +248,6 @@ int main() {
 
 		glm::mat4 model = glm::mat4(1.0f);
 		float radius = 1.5;
-		//lightPos.x = sin(currentTime) * radius;
-		//lightPos.y = sin(currentTime  * radius * 2);
-		//lightPos.z = cos(currentTime) * radius;
 
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
@@ -259,21 +271,29 @@ int main() {
 		shader.setFloat("material.specular",  0.5f, 0.5f, 0.5f);
 		shader.setFloat("material.shininess", 32.0f);
 
-		shader.setFloat("light.ambient",  0.2f, 0.2f, 0.2f);
-		shader.setFloat("light.diffuse",  0.5, 0.5, 0.5);
+		shader.setFloat("light.ambient",  0.3f, 0.3f, 0.3f);
+		shader.setFloat("light.diffuse",  0.75, 0.75, 0.75);
 		shader.setFloat("light.specular", 1.0f, 1.0f, 1.0f);
-		shader.setFloat("light.position", lightPos.x, lightPos.y, lightPos.z);
+		//shader.setFloat("light.position", lightPos.x, lightPos.y, lightPos.z);
+		shader.setFloat("light.direction", lightPos.x, lightPos.y, lightPos.z);
 		
 		shader.setFloat("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
 		
-		/*glm::mat4 */ model = glm::mat4(1.0f);
-		//model = glm::rotate(model, glm::radians(currentTime * 10.0f), glm::vec3(0.3f, 0.5f, 0.2f));
-		
-		shader.setMat("model", glm::value_ptr(model));
+		glBindVertexArray(VAO);
+		for (unsigned int i = 0; i < 10; i++) {
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 15.0f * i;
+			model = glm::rotate(model, glm::radians(angle * currentTime), glm::vec3(0.3f, 0.5f, 0.2f));
+			shader.setMat("model", glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		//model = glm::mat4(1.0f);
+		//shader.setMat("model", glm::value_ptr(model));
 
 		// Render Cube
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		
 		// ------------------------------------------| 
 		
 		// ------------------------------------------------------------------------------------
