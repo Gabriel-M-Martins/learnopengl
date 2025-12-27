@@ -39,7 +39,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 	vector<Texture> textures;
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		Vertex vertex;
+		Vertex vertex {};
 
 		glm::vec3 vector {};
 		vector.x = mesh->mVertices[i].x;
@@ -54,8 +54,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 
 		if (mesh->mTextureCoords[0]) {
 			glm::vec2 vec {};
-			vec.x = mesh->mTextureCoords[0]->x;
-			vec.y = mesh->mTextureCoords[0]->y;
+			vec.x = mesh->mTextureCoords[0][i].x;
+			vec.y = mesh->mTextureCoords[0][i].y;
 			vertex.TexCoords = vec;
 		} else {
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
@@ -128,8 +128,10 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
 		GLenum format;
 		if (nrComponents == 1)
 			format = GL_RED;
-		else if (nrComponents == 3)
+		else if (nrComponents == 3) {
 			format = GL_RGB;
+			glEnable(GL_FRAMEBUFFER_SRGB);
+		}
 		else if (nrComponents == 4)
 			format = GL_RGBA;
 
@@ -141,6 +143,10 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		if (nrComponents == 3) {
+			glDisable(GL_FRAMEBUFFER_SRGB);
+		}
 
 		stbi_image_free(data);
 	}

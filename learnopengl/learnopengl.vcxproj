@@ -106,12 +106,20 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc143-mtd.lib;unit.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /E /I /Y "$(ProjectDir)resources" "$(TargetDir)resources"
+xcopy /E /I /Y "$(ProjectDir)dependencies\dll\" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /s /q "$(TargetDir)resources"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -144,19 +152,19 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragment.frag" />
-    <None Include="lamp.frag" />
-    <None Include="lamp.vert" />
-    <None Include="model_loading.frag" />
-    <None Include="model_loading.vert" />
-    <None Include="vertex.vert" />
+    <None Include="resources\shaders\fragment.frag" />
+    <None Include="resources\shaders\lamp.frag" />
+    <None Include="resources\shaders\lamp.vert" />
+    <None Include="resources\shaders\model_loading.frag" />
+    <None Include="resources\shaders\model_loading.vert" />
+    <None Include="resources\shaders\vertex.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="awesomeface.png" />
-    <Image Include="container.jpg" />
-    <Image Include="container2.png" />
-    <Image Include="container2_specular.png" />
-    <Image Include="wall.jpg" />
+    <Image Include="resources\images\awesomeface.png" />
+    <Image Include="resources\images\container.jpg" />
+    <Image Include="resources\images\container2.png" />
+    <Image Include="resources\images\container2_specular.png" />
+    <Image Include="resources\images\wall.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
