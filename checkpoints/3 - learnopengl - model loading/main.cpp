@@ -60,6 +60,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 unsigned int loadTexture(const char* imagePath, const bool isPng = false);
 unsigned int generateCube();
 glm::vec3 lightPos;
+glm::vec3 lightColor;
 
 int main() {
 	glfwInit();
@@ -101,16 +102,18 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	// ---------------------------------------------------------------------------------------------- SHADER
-	Shader shader("model_loading.vert", "model_loading.frag");
-	Model backpackModel("backpack/backpack.obj");
+	Shader shader("resources/shaders/model_loading.vert", "resources/shaders/model_loading.frag");
+	Model backpackModel("resources/models/backpack/backpack.obj");
+	Model robotModel("resources/models/drone_obj/drone.obj");
 
 	// ---------------------------------------------------------------------------------------------- KEYS
 	setupKeyMap(window);
 
 	unsigned int cubeVAO = generateCube();
-	lightPos = glm::vec3(0.75f, 0.75f, 1.0f);
+	lightPos = glm::vec3(0.5f, 0.5f, 1.0f);
+	lightColor = glm::vec3(1.0f);
 	
-	Shader lightShader("lamp.vert", "lamp.frag");
+	Shader lightShader("resources/shaders/lamp.vert", "resources/shaders/lamp.frag");
 
 	// ---------------------------------------------------------------------------------------------- RENDER LOOP
 	while (!glfwWindowShouldClose(window)) {
@@ -137,32 +140,45 @@ int main() {
 		lightShader.setMat("model", lightModel);
 		lightShader.setMat("view", view);
 		lightShader.setMat("projection", projection);
+		lightShader.setFloat("color", lightColor);
 
 		glBindVertexArray(cubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// ------------------------------------------| Objects
+		// ----------------------| Backpack
 		glm::mat4 modelMat = glm::mat4(1.0f);
-		modelMat = glm::translate(modelMat, glm::vec3(0.0f, 0.0f, 0.0f));
-		modelMat = glm::scale(modelMat, glm::vec3(1.0f, 1.0f, 1.0f));
+		modelMat = glm::translate(modelMat, glm::vec3(-1.0f, 0.0f, 0.0f));
+		modelMat = glm::scale(modelMat, glm::vec3(0.5f));
 		
 		shader.use();
 		shader.setMat("projection",		projection);
 		shader.setMat("view",			view);
 		shader.setMat("model",			modelMat);
 		
+		shader.setBool("flipUV", false);
+
 		shader.setFloat("pointLights[0].position",	lightPos);
 		shader.setFloat("pointLights[0].constant",	1.0f);
 		shader.setFloat("pointLights[0].linear",	0.09f);
 		shader.setFloat("pointLights[0].linear",	0.032f);
 
-		shader.setFloat("pointLights[0].ambient",	glm::vec3(1.0f));
-		shader.setFloat("pointLights[0].diffuse",	glm::vec3(0.3f));
-		shader.setFloat("pointLights[0].specular",	glm::vec3(1.0f));
+		shader.setFloat("pointLights[0].diffuse",	lightColor);
+		shader.setFloat("pointLights[0].specular",	lightColor);
+		shader.setFloat("pointLights[0].ambient",	lightColor * 0.2f);
 
-		
 		backpackModel.Draw(shader);
 
+		// ----------------------| Robot
+		modelMat = glm::mat4(1.0f);
+		modelMat = glm::translate(modelMat, glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMat = glm::scale(modelMat, glm::vec3(1.0f));
+
+		shader.setBool("flipUV", true);
+		shader.setMat("model", modelMat);
+		robotModel.Draw(shader);
+
+		// ------------------------------------------| Clean Up
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -198,6 +214,34 @@ void handleKey(GLFWwindow* window, KeySettings& key) {
 
 void setupKeyMap(GLFWwindow* window)
 {
+	keymap[GLFW_KEY_C] = KeySettings{
+		GLFW_KEY_C,
+		[&] {
+			lightColor = glm::vec3(1.0f);
+		},
+	};
+
+	keymap[GLFW_KEY_R] = KeySettings{
+		GLFW_KEY_R,
+		[&] {
+			lightColor = glm::vec3(1.0f, 0.0f, 0.0f);
+		},
+	};
+
+	keymap[GLFW_KEY_G] = KeySettings{
+		GLFW_KEY_G,
+		[&] {
+			lightColor = glm::vec3(0.0f, 1.0f, 0.0f);
+		},
+	};
+
+	keymap[GLFW_KEY_B] = KeySettings{
+		GLFW_KEY_B,
+		[&] {
+			lightColor = glm::vec3(0.0f, 0.0f, 1.0f);
+		},
+	};
+
 	keymap[GLFW_KEY_UP] = KeySettings{
 		GLFW_KEY_UP,
 		[&] {
@@ -312,16 +356,14 @@ void setupKeyMap(GLFWwindow* window)
 			GLint modes[2];
 			glGetIntegerv(GL_POLYGON_MODE, modes);
 			glPolygonMode(GL_FRONT_AND_BACK, modes[0] == GL_LINE ? GL_FILL : GL_LINE);
-		},
-		false
+		}
 	};
 
 	keymap[GLFW_KEY_ESCAPE] = KeySettings{
 		GLFW_KEY_ESCAPE,
 		[&] {
 			glfwSetWindowShouldClose(window, true);
-		},
-		false
+		}
 	};
 }
 

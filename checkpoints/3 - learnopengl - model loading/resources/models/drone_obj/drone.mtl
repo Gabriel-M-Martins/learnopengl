@@ -1,0 +1,23 @@
+# Blender 5.0.1 MTL File: 'drone.blend'
+# www.blender.org
+
+newmtl Fire
+Ns 20.000006
+Ka 1.000000 1.000000 1.000000
+Kd 0.588000 0.588000 0.588000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+
+newmtl Robot
+Ns 319.999939
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd diff.jpg
+map_Ks spec.jpg
+map_Bump -bm 1.000000 normal.jpg

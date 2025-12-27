@@ -3,7 +3,6 @@
 struct Material {
     sampler2D texture_diffuse1;
     sampler2D texture_specular1;
-    sampler2D texture_normals1;
 };
 
 struct PointLight {
