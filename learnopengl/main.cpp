@@ -58,6 +58,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // ---------------------------------------------------------------------------------------------- Utility
 unsigned int loadTexture(const char* imagePath, const bool isPng = false);
+unsigned int generateCube();
+glm::vec3 lightPos;
 
 int main() {
 	glfwInit();
@@ -100,10 +102,15 @@ int main() {
 
 	// ---------------------------------------------------------------------------------------------- SHADER
 	Shader shader("model_loading.vert", "model_loading.frag");
-	Model model("backpack/backpack.obj");
+	Model backpackModel("backpack/backpack.obj");
 
 	// ---------------------------------------------------------------------------------------------- KEYS
 	setupKeyMap(window);
+
+	unsigned int cubeVAO = generateCube();
+	lightPos = glm::vec3(0.75f, 0.75f, 1.0f);
+	
+	Shader lightShader("lamp.vert", "lamp.frag");
 
 	// ---------------------------------------------------------------------------------------------- RENDER LOOP
 	while (!glfwWindowShouldClose(window)) {
@@ -115,19 +122,46 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// ------------------------------------------| Projection & Transformations
-		shader.use();
-
+		// ------------------------------------------------------------------------------------| Projection & Transformations
 		projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 		view = camera.GetViewMatrix();
-		shader.setMat("projection", projection);
-		shader.setMat("view", view);
 
+		// ------------------------------------------| Lights
+		glm::mat4 lightModel = glm::mat4(1.0f);
+		float radius = 3.0;
+
+		lightModel = glm::translate(lightModel, lightPos);
+		lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+
+		lightShader.use();
+		lightShader.setMat("model", lightModel);
+		lightShader.setMat("view", view);
+		lightShader.setMat("projection", projection);
+
+		glBindVertexArray(cubeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// ------------------------------------------| Objects
 		glm::mat4 modelMat = glm::mat4(1.0f);
 		modelMat = glm::translate(modelMat, glm::vec3(0.0f, 0.0f, 0.0f));
 		modelMat = glm::scale(modelMat, glm::vec3(1.0f, 1.0f, 1.0f));
-		shader.setMat("model", modelMat);
-		model.Draw(shader);
+		
+		shader.use();
+		shader.setMat("projection",		projection);
+		shader.setMat("view",			view);
+		shader.setMat("model",			modelMat);
+		
+		shader.setFloat("pointLights[0].position",	lightPos);
+		shader.setFloat("pointLights[0].constant",	1.0f);
+		shader.setFloat("pointLights[0].linear",	0.09f);
+		shader.setFloat("pointLights[0].linear",	0.032f);
+
+		shader.setFloat("pointLights[0].ambient",	glm::vec3(1.0f));
+		shader.setFloat("pointLights[0].diffuse",	glm::vec3(0.3f));
+		shader.setFloat("pointLights[0].specular",	glm::vec3(1.0f));
+
+		
+		backpackModel.Draw(shader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -164,6 +198,60 @@ void handleKey(GLFWwindow* window, KeySettings& key) {
 
 void setupKeyMap(GLFWwindow* window)
 {
+	keymap[GLFW_KEY_UP] = KeySettings{
+		GLFW_KEY_UP,
+		[&] {
+			lightPos.y += SPEED * deltaTime;
+		},
+		true,
+		0.01f
+	};
+
+	keymap[GLFW_KEY_DOWN] = KeySettings{
+		GLFW_KEY_DOWN,
+		[&] {
+			lightPos.y -= SPEED * deltaTime;
+		},
+		true,
+		0.01f
+	};
+
+	keymap[GLFW_KEY_RIGHT] = KeySettings{
+		GLFW_KEY_RIGHT,
+		[&] {
+			lightPos.x += SPEED * deltaTime;
+		},
+		true,
+		0.01f
+	};
+
+	keymap[GLFW_KEY_LEFT] = KeySettings{
+		GLFW_KEY_LEFT,
+		[&] {
+			lightPos.x -= SPEED * deltaTime;
+		},
+		true,
+		0.01f
+	};
+
+	keymap[GLFW_KEY_HOME] = KeySettings{
+		GLFW_KEY_HOME,
+		[&] {
+			lightPos.z += SPEED * deltaTime;
+		},
+		true,
+		0.01f
+	};
+
+	keymap[GLFW_KEY_END] = KeySettings{
+		GLFW_KEY_END,
+		[&] {
+			lightPos.z -= SPEED * deltaTime;
+		},
+		true,
+		0.01f
+	};
+
 	keymap[GLFW_KEY_W] = KeySettings{
 		GLFW_KEY_W,
 		[&] {
@@ -261,6 +349,66 @@ unsigned int loadTexture(const char* imagePath, const bool isPng) {
 	stbi_image_free(data);
 
 	return texture;
+}
+
+unsigned int generateCube()
+{
+	float vertices[] = {
+		// positions
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f
+	};
+
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
